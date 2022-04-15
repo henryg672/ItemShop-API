@@ -1,0 +1,66 @@
+version: "3.8"
+
+services:
+  project1:
+    build: .
+    ports:
+      - 8080:8080
+    environment:
+      - DB_URL=jdbc:postgresql://postgres:5432/postgres
+      - DB_USER=postgres
+      - DB_PASS=pass
+    container_name: project1-container
+    depends_on:
+      - postgres
+    volumes:
+      - ./logs/application.log:/logs/application.log
+      # IF THE FILE DOES NOT ALREADY EXIST, A FOLDER OF THAT NAME MIGHT BE CREATED
+
+  postgres:
+    image: postgres
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=pass
+    container_name: postgres-container
+    volumes:
+      - db-data:/var/lib/postgresql/data
+  promtail:
+    image: grafana/promtail:latest
+    container_name: project1-promtail
+    volumes:
+      - ./loki-stack/promtail/promtail-docker-config.yml:/etc/promtail/docker-config.yaml
+      - ./logs/application.log:/var/log/application.log
+    command: "--config.file=/etc/promtail/docker-config.yaml"
+  loki:
+    image: grafana/loki:latest
+    container_name: project1-loki
+    ports:
+      - 3100:3100
+  grafana:
+    image: grafana/grafana:latest
+    container_name: project1-grafana
+    volumes:
+      - grafana-data:/var/lib/grafana
+    # persisting grafana settings
+    ports:
+      - 3000:3000
+    depends_on:
+      - loki
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - 9090:9090
+    volumes:
+  #    - ./loki-stack/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./loki-stack/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml # passing the directory instead of the config file for prometheus
+      - prometheus-data:/prometheus
+    container_name: project1-prometheus
+
+volumes:
+  db-data:
+    driver: local
+  grafana-data:
+    driver: local
+  prometheus-data:
+    driver: local
