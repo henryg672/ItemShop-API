@@ -21,6 +21,6 @@ Deployment:
 
 To run from source code:
 
-• git clone  • mvn package • java -jar target/.jar
+• git clone https://github.com/henryg672/ItemShop-API.git • mvn package • java -jar target/.jar
 
 To run with docker: • docker build .
